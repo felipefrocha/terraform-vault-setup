@@ -1,0 +1,122 @@
+#!/bin/bash
+set -e
+
+RED='\e[1;31m\e[1;42m'
+NC='\033[0m'
+
+function log_error () {
+cat << EOF
+Not valid environment, you shoud provide a valid environment: 
+  main; 
+i.e:  
+  $ ${0} -a"
+EOF
+exit 5
+}
+
+function help_menu () {
+cat << EOF
+Usage: ${0} (-h | -l | -a)
+
+ARGUMENTS:
+    USERNAME
+    PASSWORD                
+                      
+OPTIONS:
+   -h| --help                        Show this message
+   -l| --login                       Login into CI&TLabs Vault with your account valid for 8h
+   -a| --aws-admins                  Get Admins role for aws credentials valid for 1h
+   
+
+EXAMPLES:
+   Login into CI&TLabs Vault with Your user:
+        $ ${0} -l <username> <password>
+
+   Get AWS Credentials for using it during 1h with the backend role permissions:
+        $ # after login
+        $ ${0} -a main|prd|dev|hml
+        $ # or export PAT variable and run the same command
+
+   Advanced, this will set your CURRENT environment with aws credentials:
+        $ ${0} -l username password && \$(${0} -b main)
+        $ env | grep AWS # this will present with the actual credentials
+        $ ${0} -u # this will self update the cli
+
+
+   Get help:
+        $ ${0} -h
+EOF
+exit 0
+}
+
+function login () {
+  local username="${1}"
+  local password="${2}"
+
+  vault login -method=userpass -path=poc username="${username}" password="${password}"
+  exit 0
+}
+
+function select_env() {
+  case "${1}" in
+  main)
+  local env=""
+  shift
+  ;;
+  dev)
+  local env="-dev"
+  shift
+  ;;
+  *)
+  log_error
+  ;;
+  esac 
+  echo ${env}
+}
+
+function admin_aws_creds () {
+  [ "$#" -lt 1 ] && log_error 
+  local env=$(select_env ${1})
+  # echo "Environment selected ${env}"
+  vault read ciandt/sts/ciandt-adm${env} ttl=60m \
+    | tr -d ' ' \
+    | sed \
+      -e 's/access_key/export AWS_ACCESS_KEY_ID=/g' \
+      -e 's/secret_key/export AWS_SECRET_ACCESS_KEY=/g' \
+      -e 's/security_token/export AWS_SESSION_TOKEN=/g' \
+    | grep AWS
+    exit 0
+}
+
+
+[ "$#" -eq 0 ] && help_menu
+
+while [[ "$#" > 0 ]] 
+do
+case "${1}" in
+  -l|--login)
+  if [ "$#" -lt 3 ] && [ -z "$PAT" ]; then
+    echo "You should provide 2 args: ciandtcli <user> <pass>" >&2 
+    exit 3
+  else
+    login ${2} ${3}
+  fi
+  shift
+  ;;
+  -a|--aws-admin)
+  admin_aws_creds ${2}
+  shift
+  ;;
+  -h|--help)
+  help_menu
+  shift
+  ;;
+  *)
+  echo "${1} is not a valid flag, try running: ${0} --help"
+  help_menu
+  ;;
+esac
+shift
+done
+
+exit 0

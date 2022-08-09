@@ -1,0 +1,22 @@
+[Unit]
+Description=Run %p
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker kill %p
+ExecStartPre=-/usr/bin/docker rm -f %p
+ExecStart=/usr/bin/docker run --rm --name %p \
+    --cap-add=IPC_LOCK \
+    -e VAULT_ADDR=http://127.0.0.1:8200 \
+    -p 8200:8200 \
+    -p 8201:8201 \
+    -v /etc/vault.d:/vault/config \
+    -v /tmp/vault:/vault/logs \
+    -v /etc/vault.d/vault:/vault/file \
+    %p:latest server
+ExecStop=/usr/bin/docker stop %p
+
+[Install]
+WantedBy=multi-user.target
