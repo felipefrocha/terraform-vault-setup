@@ -1,44 +1,38 @@
 .ONESHELL:
-.SHELL := /usr/bin/bash
+.DEFAULT_GOAL := help
+SHELL := /bin/bash
 RANDOM := $(shell bash -c 'echo $$RANDOM')
 BACKEND?=../../smart-backend
 ENV?=dev
 
-# cnf ?= .env.vault
+# cnf ?= .env
 # include $(cnf)
 # export $(shell sed 's/=.*//' $(cnf))
 
+# Get the latest tag
+TAG = $(shell git describe --tags --abbrev=0)
+GIT_COMMIT = $(shell git log -1 --format=%h)
 
-download:
-	@curl \
-    --silent \
-    --remote-name \
-    "${VAULT_URL}/${VAULT_VERSION}/vault_${VAULT_VERSION}_${VAULT_RELEASE}.zip"
-	@curl \
-      --silent \
-      --remote-name \
-      "${VAULT_URL}/${VAULT_VERSION}/vault_${VAULT_VERSION}_SHA256SUMS"
-	@curl \
-      --silent \
-      --remote-name \
-      "${VAULT_URL}/${VAULT_VERSION}/${VAULT_VERSION}/vault_${VAULT_VERSION}_SHA256SUMS.sig"
+FOLDER := $(shell echo $${PWD} | rev | cut -d/ -f1 | rev)
+FOLDER_NAME := $(shell printf '%s\n' "${FOLDER}" | awk '{ print toupper($$0) }')
 
-install:
-	@unzip vault_${VAULT_VERSION}_linux_amd64.zip
-	@sudo chown root:root vault
-	@sudo mv vault /usr/local/bin/
-	@vault -autocomplete-install
-	@complete -C /usr/local/bin/vault vault
+CASE?=case
 
-configuration:
-	@sudo setcap cap_ipc_lock=+ep /usr/local/bin/vault
-	@sudo useradd --system --home /etc/vault.d --shell /bin/false vault
+.PHONY: help
 
-folder_structure:
-	@sudo mkdir --parents /etc/vault.d
-	@sudo touch /etc/vault.d/vault.hcl
-	@sudo chown --recursive vault:vault /etc/vault.d
-	@sudo chmod 640 /etc/vault.d/vault.hcl
+help: ## This help.
+
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+initial_setup:
+	@cd setup \
+		&& terraform init -upgrade \
+		&& terraform validate \
+		&& terraform apply -auto-approve
+		
+deploy_cli: 
+	@sudo cp cli/citcli /usr/local/bin/
+	@sudo chmod +x /usr/local/bin/citcli
 
 vault_config:
 	@cd vault \

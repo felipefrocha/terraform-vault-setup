@@ -7,7 +7,7 @@ variable "certifficate_name" {
 }
 
 variable "download_certs" {
-  default = true
+  default = false
 }
 
 variable "common_name" {
@@ -34,24 +34,6 @@ variable "permissions" {
   default = "0600"
 }
 
-# /**
-#  * Keys to be manage
-#  */
-
-# module "private_key" {
-#   # Module Source
-#   source = "git@github.com:queimadiaria/tls-module-terraform.git"
-
-#   create_key            = true
-#   name                  = "tf_mkr"
-#   rsa_bits              = "2048"
-#   environment           = var.environment
-#   project               = var.project
-#   common_name           = ""
-#   organization_name     = ""
-#   validity_period_hours = ""
-#   create_tls            = false
-# }
 
 /**
  * Create TLS Bastion Vault Consul
@@ -130,10 +112,6 @@ module "leaf_tls_self_signed_cert" {
 #   }
 # }
 
-
-
-
-
 output "root_ca_private_key_pem" {
   value     = module.root_tls_self_signed_ca.private_key_pem
   sensitive = true
@@ -197,9 +175,10 @@ resource "null_resource" "mv_keys" {
       "sudo mv /tmp/tls* /opt/vault/tls/",
       "sudo mv /tmp/vault.env /etc/vault.d/",
       "sudo chown -R vault:vault /opt/vault/tls/",
+      "sudo chmod 640 /opt/vault/tls/",
       "sudo sed -i -E 's|\\/opt\\/vault\\/tls\\/tls\\.crt.*|/opt/vault/tls/tls.crt\"|g' /etc/vault.d/vault.hcl",
       "sudo sed -i -E 's|\\/opt\\/vault\\/tls\\/tls\\.key.*|/opt/vault/tls/tls.key\"|g' /etc/vault.d/vault.hcl",
-      "sudo systemctl restart vault"
+      "sudo systemctl restart vault",
     ]
   }
   # depends_on = [

@@ -1,22 +1,4 @@
 
-# resource "vault_ldap_auth_backend" "ldap" {
-#     path        = "local"
-#     url         = "ldap://localserver.com:3268"
-#     userdn      = "DC=jnj,DC=com"
-#     userattr    = "sAMAccountName"
-#     upndomain   = "JNJ.COM"
-#     discoverdn  = false
-#     groupdn     = "DC=jnj,DC=com"
-#     # groupattr = "cn"
-#     groupfilter = "(&(objectClass=group)(member:1.2.840.113556.1.4.1941:={{.UserDN}}))"
-# }
-
-# resource "vault_ldap_auth_backend_group" "group" {
-#     groupname = "dba"
-#     policies = [vault_policy.admins.name, "default"]
-#     backend   = vault_ldap_auth_backend.ldap.path
-# }
-
 resource "vault_auth_backend" "user_password" {
   type = "userpass"
   path = "poc"
@@ -69,4 +51,3 @@ rule "charset" {
 }
 EOF
 }
-

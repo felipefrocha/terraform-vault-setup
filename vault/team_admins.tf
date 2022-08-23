@@ -1,4 +1,4 @@
-resource "vault_aws_secret_backend_role" "queima_adm" {
+resource "vault_aws_secret_backend_role" "adm" {
   backend         = vault_aws_secret_backend.aws.path
   name            = "ciandt-adm"
   role_arns       = ["arn:aws:iam::553735337563:role/VaultAdministratorRole"]
@@ -87,7 +87,7 @@ data "vault_policy_document" "admins" {
     capabilities = ["read"]
   }
 
-  # Enable and manage the secrets engine `queimadiaria/` path
+  # Enable and manage the secrets engine `ciandt/` path
   rule {
     description  = "List, create, update, and delete key/value secrets|"
     path         = "ciandt/*"
