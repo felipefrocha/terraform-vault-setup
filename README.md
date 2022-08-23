@@ -157,3 +157,44 @@ EOF
 
 
 Faça login pela CLI e utilize os comandos listados no help da mesma para começar a consumir os valores de segredo e credenciais com TTLs.
+
+### Configuração do Terraform usando Vault
+
+```hcl
+provider "vault" {
+  address = var.vault_addr
+  # Auth basend on token This can be ajusted 
+  # to use AppRole in a CICD pipeline for example
+  auth_login {
+    path = "auth/ciandt/login"
+    parameters = {
+      token = var.vault_token
+    }
+  }
+}
+
+data "vault_aws_access_credentials" "creds" {
+  type    = "sts"
+  backend = "ciandt"
+  role    = "ciandt-adm"
+}
+
+provider "aws" {
+  access_key = data.vault_aws_access_credentials.creds.access_key
+  secret_key = data.vault_aws_access_credentials.creds.secret_key
+  token      = data.vault_aws_access_credentials.creds.security_token
+
+  region     = var.region
+
+  default_tags {
+    tags = {
+      Builder      = "Terraform"
+      Department   = "CI&T Labs"
+      Application  = "Service Name"
+      Project      = "Micro Infra"
+      Environment  = local.environment[var.environment]
+      CostCenter   = "0001 - TI - CORE"
+    }
+  }
+}
+```
