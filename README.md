@@ -197,4 +197,15 @@ provider "aws" {
     }
   }
 }
+
+data "vault_generic_secret" "cloudflare" {
+  path = "cloudflare/credentials"
+}
+
+provider "cloudflare" {
+  account_id = data.vault_generic_secret.cloudflare.data["account_id"]
+  api_key = data.vault_generic_secret.cloudflare.data["cloudflare_api_key"]
+  email = data.vault_generic_secret.cloudflare.data["cloudflare_id"]
+}
+
 ```
