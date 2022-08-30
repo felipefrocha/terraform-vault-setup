@@ -79,7 +79,7 @@ Configure:
 SSH (~/.ssh/config)
 
 ```bash
-cat>>setup/var.auto.tfvars>>EOF
+cat>>setup/var.auto.tfvars<<EOF
 server_name =  "pegasus"
 certifficate_name =  "tls"
 download_certs =  false
@@ -146,7 +146,7 @@ resource "vault_ldap_auth_backend_group" "group" {
 * Verifique as configurações no diretorio vault:
 
 ```bash
-cat>>vault/var.auto.tfvars>>EOF
+cat>>vault/var.auto.tfvars<<EOF
 AWS_ACCESS_KEY_ID = ""
 AWS_SECRET_ACCESS_KEY = ""
 vault_addr = "https://00000"
@@ -207,5 +207,4 @@ provider "cloudflare" {
   api_key = data.vault_generic_secret.cloudflare.data["cloudflare_api_key"]
   email = data.vault_generic_secret.cloudflare.data["cloudflare_id"]
 }
-
 ```
